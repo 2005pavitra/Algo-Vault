@@ -61,45 +61,30 @@ app.post('/api/save-problem', async (req, res) => {
     }
 });
 
-// Endpoint to get Heatmap data (LeetCode adapter)
+// Endpoint to get Heatmap data (Local Algo-Vault stats)
 app.get('/api/heatmap/:username', async (req, res) => {
-    const { username } = req.params;
+    // Username param is kept for route compatibility but ignored for local stats
     try {
-        const query = `
-            query userProfileCalendar($username: String!) {
-                matchedUser(username: $username) {
-                    submissionCalendar
+        const heatmapData = await Problem.aggregate([
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+                    count: { $sum: 1 }
                 }
+            },
+            {
+                $sort: { _id: 1 }
             }
-        `;
+        ]);
 
-        const response = await axios.post('https://leetcode.com/graphql', {
-            query,
-            variables: { username }
-        }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'Referer': 'https://leetcode.com'
-            }
-        });
+        // Transform to standard format: [{ date: "YYYY-MM-DD", count: N }]
+        const formattedData = heatmapData.map(item => ({
+            date: item._id,
+            count: item.count
+        }));
 
-        const calendarStr = response.data?.data?.matchedUser?.submissionCalendar;
-
-        if (!calendarStr) {
-            return res.status(404).json({ error: 'User not found or no data' });
-        }
-
-        const calendarData = JSON.parse(calendarStr);
-        // Format: { "unix_timestamp": count, ... }
-        // Convert to [{ date: "YYYY-MM-DD", count: N }]
-
-        const heatmapData = Object.entries(calendarData).map(([timestamp, count]) => {
-            const date = new Date(parseInt(timestamp) * 1000); // timestamp is in seconds
-            const dateString = date.toISOString().split('T')[0];
-            return { date: dateString, count: count };
-        });
-
-        res.json(heatmapData);
+        console.log('Generated local heatmap data:', formattedData);
+        res.json(formattedData);
 
     } catch (error) {
         console.error('Error fetching heatmap:', error.message);
@@ -121,6 +106,62 @@ app.get('/api/problems/review', async (req, res) => {
     } catch (error) {
         console.error('Error fetching review problems:', error);
         res.status(500).json({ error: 'Failed to fetch problems' });
+    }
+});
+
+// Endpoint to update SRS data for a problem
+app.post('/api/problems/:id/review', async (req, res) => {
+    const { id } = req.params;
+    const { rating } = req.body; // 'again', 'hard', 'good', 'easy'
+
+    try {
+        const problem = await Problem.findById(id);
+        if (!problem) {
+            return res.status(404).json({ error: 'Problem not found' });
+        }
+
+        // Simplified Spaced Repetition Logic
+        // In a real app, use a robust algorithm like SM-2
+        let { interval, easeFactor } = problem.srsData;
+
+        switch (rating) {
+            case 'again': // Fail
+                interval = 1;
+                easeFactor = Math.max(1.3, easeFactor - 0.2);
+                break;
+            case 'hard':
+                interval = interval * 1.2;
+                easeFactor = Math.max(1.3, easeFactor - 0.15);
+                break;
+            case 'good':
+                interval = interval * easeFactor;
+                // Ease factor stays same
+                break;
+            case 'easy':
+                interval = interval * easeFactor * 1.3;
+                easeFactor = easeFactor + 0.15;
+                break;
+            default:
+                // Default to 'good' behavior if unknown
+                interval = interval * easeFactor;
+        }
+
+        // Apply logic
+        problem.srsData.interval = Math.round(interval); // Keep interval as integer days
+        problem.srsData.easeFactor = easeFactor;
+
+        // Calculate next date
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + problem.srsData.interval);
+        problem.srsData.nextReviewDate = nextDate;
+
+        await problem.save();
+        console.log(`Updated problem ${problem.title} SRS: interval=${problem.srsData.interval}, next=${nextDate.toISOString().split('T')[0]}`);
+
+        res.json({ message: 'Review recorded', nextReviewDate: nextDate });
+    } catch (error) {
+        console.error('Error updating review:', error);
+        res.status(500).json({ error: 'Failed to record review' });
     }
 });
 

@@ -10,7 +10,7 @@ function App() {
 
   useEffect(() => {
     // Fetch heatmap data from our backend
-    axios.get('http://localhost:5000/api/heatmap/2005pavitra')
+    axios.get('http://localhost:5000/api/heatmap/local')
       .then(res => {
         console.log("Heatmap data:", res.data);
         setHeatmapData(res.data);
@@ -47,6 +47,24 @@ function App() {
     }
   };
 
+  const handleReview = (rating) => {
+    if (!currentProblem) return;
+
+    // Optimistic update: Move to next immediately
+    handleNextProblem();
+
+    axios.post(`http://localhost:5000/api/problems/${currentProblem._id}/review`, { rating })
+      .then(res => {
+        console.log("Review recorded:", res.data);
+        // Optionally remove the problem from the list or update it
+      })
+      .catch(err => console.error("Error submitting review:", err));
+  };
+
+  const handleAddProblem = () => {
+    alert("To add a problem, use the Algo-Vault Chrome Extension on LeetCode!");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans text-gray-900">
 
@@ -61,7 +79,12 @@ function App() {
             </div>
             <div className="flex items-center space-x-4">
               <button className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">Dashboard</button>
-              <button className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition shadow">Add Problem</button>
+              <button
+                onClick={handleAddProblem}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition shadow"
+              >
+                Add Problem
+              </button>
             </div>
           </div>
         </div>
@@ -83,14 +106,21 @@ function App() {
                 You have <span className="font-bold text-indigo-600">{reviewProblems.length}</span> problems due for review today.
               </p>
             </div>
-            <button className="mt-4 md:mt-0 bg-white border border-indigo-600 text-indigo-600 px-6 py-2 rounded-lg font-medium hover:bg-indigo-50 transition">
+            <button
+              onClick={handleNextProblem}
+              className="mt-4 md:mt-0 bg-white border border-indigo-600 text-indigo-600 px-6 py-2 rounded-lg font-medium hover:bg-indigo-50 transition"
+            >
               Skip Session
             </button>
           </div>
 
           {currentProblem ? (
             <div className="transition-all duration-500 ease-in-out">
-              <ReviewCard problem={currentProblem} key={currentProblem._id || currentProblem.title} />
+              <ReviewCard
+                problem={currentProblem}
+                key={currentProblem._id || currentProblem.title}
+                onReview={handleReview}
+              />
               <div className="flex justify-center mt-6">
                 <button
                   onClick={handleNextProblem}

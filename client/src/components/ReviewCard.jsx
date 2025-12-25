@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import CodeViewer from './CodeViewer';
 
-const ReviewCard = ({ problem }) => {
+const ReviewCard = ({ problem, onReview }) => {
     const [revealed, setRevealed] = useState(false);
 
     return (
@@ -48,16 +48,24 @@ const ReviewCard = ({ problem }) => {
                 <div className="p-6 bg-white border-t border-gray-100 animate-slide-up">
                     <p className="text-center text-gray-500 mb-4 text-sm font-medium">How difficult was this problem?</p>
                     <div className="flex justify-center gap-4">
-                        <button className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-4 rounded-lg transition border border-red-200">
+                        <button
+                            onClick={() => onReview && onReview('again')}
+                            className="flex-1 bg-red-100 hover:bg-red-200 text-red-700 font-bold py-2 px-4 rounded-lg transition border border-red-200">
                             Again (Fail)
                         </button>
-                        <button className="flex-1 bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold py-2 px-4 rounded-lg transition border border-orange-200">
+                        <button
+                            onClick={() => onReview && onReview('hard')}
+                            className="flex-1 bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold py-2 px-4 rounded-lg transition border border-orange-200">
                             Hard
                         </button>
-                        <button className="flex-1 bg-green-100 hover:bg-green-200 text-green-700 font-bold py-2 px-4 rounded-lg transition border border-green-200">
+                        <button
+                            onClick={() => onReview && onReview('good')}
+                            className="flex-1 bg-green-100 hover:bg-green-200 text-green-700 font-bold py-2 px-4 rounded-lg transition border border-green-200">
                             Good
                         </button>
-                        <button className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-lg transition border border-blue-200">
+                        <button
+                            onClick={() => onReview && onReview('easy')}
+                            className="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-lg transition border border-blue-200">
                             Easy
                         </button>
                     </div>
