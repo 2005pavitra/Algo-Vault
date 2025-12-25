@@ -107,6 +107,23 @@ app.get('/api/heatmap/:username', async (req, res) => {
     }
 });
 
+// Endpoint to fetch problems due for review
+app.get('/api/problems/review', async (req, res) => {
+    try {
+        // Find problems where nextReviewDate is less than or equal to now
+        const now = new Date();
+        const dueProblems = await Problem.find({
+            'srsData.nextReviewDate': { $lte: now }
+        });
+
+        console.log(`Found ${dueProblems.length} problems due for review`);
+        res.json(dueProblems);
+    } catch (error) {
+        console.error('Error fetching review problems:', error);
+        res.status(500).json({ error: 'Failed to fetch problems' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
