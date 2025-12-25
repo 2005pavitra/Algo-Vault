@@ -26,37 +26,29 @@ app.get('/', (req, res) => {
 // Endpoint to receive problem data from Extension
 app.post('/api/save-problem', async (req, res) => {
     try {
-        const { platform, payload, url } = req.body;
-        console.log(`Received submission for ${platform}`);
+        const { title, code, platform, tags, url } = req.body;
+        console.log(`Received submission from ${platform}: ${title}`);
 
-        // TODO: Better parsing logic based on platform to extract title/code/tags accurately
-        // For now, we save the raw payload components or defaults
-
-        let title = "Unknown Problem";
-        let code = "// Code not parsed yet";
-        let tags = [];
-
-        if (platform === 'LeetCode') {
-            // Logic to extract from LeetCode payload if available
-            // Usually payload contains question_id or similar. 
-            // We might need to fetch problem details using question_id if not in payload.
-            // For this scaffold, we'll try to guess or just use the URL as reference.
-            if (payload && payload.question_id) {
-                title = `LeetCode Problem ${payload.question_id}`;
-            }
-            if (payload && payload.typed_code) {
-                code = payload.typed_code;
-            }
+        if (!code) {
+            return res.status(400).json({ error: 'No code provided' });
         }
 
         // Check if problem already exists to update or create new
-        // Ideally we check by some unique ID (like leetcode question_id)
+        const existingProblem = await Problem.findOne({ title: title, platform: platform });
+
+        if (existingProblem) {
+            existingProblem.code = code;
+            existingProblem.srsData.nextReviewDate = new Date(); // Reset SRS on new submission? Optional.
+            await existingProblem.save();
+            console.log('Problem updated successfully');
+            return res.status(200).json({ message: 'Problem updated', problemId: existingProblem._id });
+        }
 
         const newProblem = new Problem({
             title: title || `Problem from ${url}`,
             code: code,
-            platform: platform,
-            tags: tags,
+            platform: platform || 'Unknown',
+            tags: tags || [],
             // srsData defaults will apply
         });
 
