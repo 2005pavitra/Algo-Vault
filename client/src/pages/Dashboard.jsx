@@ -10,6 +10,8 @@ import { Button } from '../components/ui/moving-border';
 import { Card } from '../components/ui/card';
 import { motion } from 'framer-motion';
 import Loader from '../components/ui/Loader';
+import { Logo } from '../components/ui/Logo';
+import { TextGenerateEffect } from '../components/ui/text-generate-effect';
 import API_URL from '../utils/api';
 
 const Dashboard = () => {
@@ -136,9 +138,7 @@ const Dashboard = () => {
             <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-black/60 backdrop-blur-xl transition-all duration-300">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                            <span className="text-white font-bold text-xl">AV</span>
-                        </div>
+                        <Logo className="w-12 h-12" />
                         <span className="text-white font-bold text-2xl tracking-tight hidden sm:block">Algo-Vault</span>
                     </div>
                     <div className="flex items-center gap-4 md:gap-6">
@@ -192,9 +192,9 @@ const Dashboard = () => {
 
                 {/* Hero Text */}
                 <div className="mb-12 text-center">
-                    <h1 className="text-4xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-neutral-50 to-neutral-400 bg-opacity-50 pb-4">
-                        Master Your Algorithms
-                    </h1>
+                    <div className="mb-4 flex justify-center">
+                        <TextGenerateEffect words="Master Your Algorithms" className="text-4xl md:text-6xl text-center" />
+                    </div>
                     <p className="text-neutral-300 max-w-2xl mx-auto text-xl md:text-2xl leading-relaxed">
                         Smart spaced repetition for competitive programmers. Keep your streak alive and never forget a pattern again.
                     </p>
