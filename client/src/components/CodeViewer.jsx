@@ -1,17 +1,26 @@
 import React from 'react';
-import CodeMirror from '@uiw/react-codemirror';
-import { java } from '@codemirror/lang-java';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-const CodeViewer = ({ code }) => {
+const CodeViewer = ({ code, fontSize = 14 }) => {
     return (
-        <div className="border rounded-md overflow-hidden text-sm">
-            <CodeMirror
-                value={code}
-                height="400px"
-                extensions={[java()]}
-                editable={false}
-                theme="light"
-            />
+        <div className="rounded-md overflow-hidden font-mono bg-[#1e1e1e] h-full">
+            <SyntaxHighlighter
+                language="java"
+                style={vscDarkPlus}
+                customStyle={{
+                    margin: 0,
+                    padding: '1.5rem',
+                    fontSize: `${fontSize}px`,
+                    lineHeight: '1.5',
+                    background: 'transparent',
+                    height: '100%',
+                }}
+                showLineNumbers={true}
+                wrapLines={true}
+            >
+                {code}
+            </SyntaxHighlighter>
         </div>
     );
 };

@@ -23,6 +23,14 @@ const problemSchema = new mongoose.Schema({
             type: Date,
             default: Date.now
         },
+        lastReviewed: {
+            type: Date,
+            default: null
+        },
+        lastDifficulty: {
+            type: String,
+            default: null
+        },
         interval: {
             type: Number,
             default: 1 // Initial interval in days
@@ -30,6 +38,10 @@ const problemSchema = new mongoose.Schema({
         easeFactor: {
             type: Number,
             default: 2.5
+        },
+        repetitions: {
+            type: Number,
+            default: 0
         }
     },
     createdAt: {

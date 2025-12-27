@@ -7,18 +7,7 @@ const Heatmap = ({ data }) => {
     const safeData = data || [];
 
     return (
-        <div className="p-6 bg-white rounded-xl shadow-sm border border-gray-200 w-full max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-800">Submission Activity</h2>
-                <div className="text-xs text-gray-500">
-                    Less <span className="inline-block w-3 h-3 bg-gray-100 rounded-sm align-middle mx-1"></span>
-                    <span className="inline-block w-3 h-3 bg-green-200 rounded-sm align-middle mx-1"></span>
-                    <span className="inline-block w-3 h-3 bg-green-400 rounded-sm align-middle mx-1"></span>
-                    <span className="inline-block w-3 h-3 bg-green-600 rounded-sm align-middle mx-1"></span>
-                    <span className="inline-block w-3 h-3 bg-green-800 rounded-sm align-middle mx-1"></span> More
-                </div>
-            </div>
-
+        <div className="w-full">
             <CalendarHeatmap
                 startDate={new Date(new Date().setFullYear(new Date().getFullYear() - 1))}
                 endDate={new Date()}
@@ -30,7 +19,7 @@ const Heatmap = ({ data }) => {
                     const count = value.count;
                     if (count >= 10) return 'color-scale-4';
                     if (count >= 5) return 'color-scale-3';
-                    if (count >= 2) return 'color-scale-2';
+                    if (count >= 3) return 'color-scale-2';
                     return 'color-scale-1';
                 }}
                 tooltipDataAttrs={value => {
@@ -41,20 +30,29 @@ const Heatmap = ({ data }) => {
                         'data-tooltip-place': 'top'
                     };
                 }}
-                showWeekdayLabels
+                showWeekdayLabels={false}
             />
-            <ReactTooltip id="heatmap-tooltip" />
+            <ReactTooltip id="heatmap-tooltip" style={{ backgroundColor: "#1e1b4b", color: "#e0e7ff", borderRadius: "8px" }} />
 
             <style>{`
-        .react-calendar-heatmap text { font-size: 10px; fill: #6b7280; }
-        .react-calendar-heatmap .color-empty { fill: #f3f4f6; } /* gray-100 */
-        .react-calendar-heatmap .color-scale-1 { fill: #bbf7d0; } /* green-200 */
-        .react-calendar-heatmap .color-scale-2 { fill: #4ade80; } /* green-400 */
-        .react-calendar-heatmap .color-scale-3 { fill: #16a34a; } /* green-600 */
-        .react-calendar-heatmap .color-scale-4 { fill: #166534; } /* green-800 */
-        
-        .react-calendar-heatmap rect:hover { stroke: #555; stroke-width: 1px; }
-      `}</style>
+                .react-calendar-heatmap text { font-size: 14px; fill: #94a3b8; font-family: 'Space Grotesk', monospace; font-weight: 500; }
+                .react-calendar-heatmap .color-empty { fill: #1e293b; rx: 4px; } /* slate-800 */
+                
+                /* DEFAULT: Intensity Scale (Dark Mode: Dim -> Bright/Neon) */
+                .react-calendar-heatmap .color-scale-1 { fill: #064e3b; rx: 4px; transition: fill 0.3s ease; } /* green-900 (Low) */
+                .react-calendar-heatmap .color-scale-2 { fill: #15803d; rx: 4px; transition: fill 0.3s ease; } /* green-700 */
+                .react-calendar-heatmap .color-scale-3 { fill: #22c55e; rx: 4px; transition: fill 0.3s ease; } /* green-500 */
+                .react-calendar-heatmap .color-scale-4 { fill: #4ade80; rx: 4px; transition: fill 0.3s ease; filter: drop-shadow(0 0 4px rgba(74, 222, 128, 0.5)); } /* green-400 (High + Glow) */
+
+                /* HOVER: Intensity Scale (Blue/Cyan) */
+                .group:hover .react-calendar-heatmap .color-scale-1 { fill: #0c4a6e; } /* sky-900 */
+                .group:hover .react-calendar-heatmap .color-scale-2 { fill: #0369a1; } /* sky-700 */
+                .group:hover .react-calendar-heatmap .color-scale-3 { fill: #0ea5e9; } /* sky-500 */
+                .group:hover .react-calendar-heatmap .color-scale-4 { fill: #38bdf8; filter: drop-shadow(0 0 4px rgba(56, 189, 248, 0.5)); } /* sky-400 + Glow */
+                
+                .react-calendar-heatmap rect { rx: 3px; } 
+                .react-calendar-heatmap rect:hover { stroke: #fff; stroke-width: 1px; transition: all 0.2s ease; }
+            `}</style>
         </div>
     );
 };

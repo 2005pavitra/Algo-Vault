@@ -4,20 +4,41 @@ const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const axios = require('axios');
 const Problem = require('./models/Problem');
+const { calculateNextReview } = require('./utils/srs');
+const { verifyToken } = require('./middleware/authMiddleware');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/algovault';
+console.log(`Attempting to connect to MongoDB at: ${MONGO_URI}`);
+console.log("ALGO-VAULT SERVER V2 UPDATED - STARTING...");
+
+mongoose.connect(MONGO_URI, {
+    serverSelectionTimeoutMS: 5000,
+})
+    .then(() => console.log('MongoDB connected successfully'))
+    .catch(err => {
+        console.error('MongoDB connection error:', err);
+        process.exit(1);
+    });
+
+// Routes
+const authRoutes = require('./routes/auth');
 
 app.use(cors());
 app.use(express.json());
 
-// Database Connection
-mongoose.connect(MONGO_URI)
-    .then(() => console.log('MongoDB connected'))
-    .catch(err => console.error('MongoDB connection error:', err));
+// Request Logger
+app.use((req, res, next) => {
+    console.log(`[INCOMING] ${req.method} ${req.originalUrl}`);
+    next();
+});
+
+// Mount Auth Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/leetcode', require('./routes/leetcode'));
 
 app.get('/', (req, res) => {
     res.send('Algo-Vault Server Running');
@@ -61,58 +82,81 @@ app.post('/api/save-problem', async (req, res) => {
     }
 });
 
-// Endpoint to get Heatmap data (Local Algo-Vault stats)
-app.get('/api/heatmap/:username', async (req, res) => {
-    // Username param is kept for route compatibility but ignored for local stats
+// Get heatmap data
+app.get('/api/heatmap/:username', verifyToken, async (req, res) => {
     try {
+        const { username } = req.params;
+        const { platform } = req.query;
+
+        console.log(`[Heatmap] Fetching for user: ${username}, platform: ${platform}`);
+
+        // Base match object (removed username filter as Problem model doesn't have it yet)
+        let matchStage = {};
+
+        if (platform && platform !== 'All') {
+            matchStage.platform = new RegExp(platform, 'i');
+        }
+
+        console.log('[Heatmap] Match Stage:', matchStage);
+
         const heatmapData = await Problem.aggregate([
+            { $match: matchStage },
             {
                 $group: {
                     _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
                     count: { $sum: 1 }
                 }
             },
-            {
-                $sort: { _id: 1 }
-            }
+            { $sort: { _id: 1 } }
         ]);
 
-        // Transform to standard format: [{ date: "YYYY-MM-DD", count: N }]
+        console.log(`[Heatmap] Found ${heatmapData.length} entries`);
+
         const formattedData = heatmapData.map(item => ({
             date: item._id,
             count: item.count
         }));
 
-        console.log('Generated local heatmap data:', formattedData);
         res.json(formattedData);
-
     } catch (error) {
-        console.error('Error fetching heatmap:', error.message);
+        console.error('Error fetching heatmap data:', error);
         res.status(500).json({ error: 'Failed to fetch heatmap data' });
     }
 });
 
-// Endpoint to fetch problems due for review
-app.get('/api/problems/review', async (req, res) => {
+// Get review problems (SRS based)
+app.get('/api/problems/review', verifyToken, async (req, res) => {
     try {
-        // Find problems where nextReviewDate is less than or equal to now
+        const { platform } = req.query;
         const now = new Date();
-        const dueProblems = await Problem.find({
-            'srsData.nextReviewDate': { $lte: now }
-        });
 
-        console.log(`Found ${dueProblems.length} problems due for review`);
+        console.log(`[Review] Fetching reviews. Platform: ${platform}`);
+
+        // Removed username filter
+        let query = {
+            'srsData.nextReviewDate': { $lte: now }
+        };
+
+        if (platform && platform !== 'All') {
+            query.platform = new RegExp(platform, 'i');
+        }
+
+        console.log('[Review] Query:', query);
+
+        // Fetch due items
+        const dueProblems = await Problem.find(query).sort({ 'srsData.nextReviewDate': 1 });
+        console.log(`[Review] Found ${dueProblems.length} problems`);
+
         res.json(dueProblems);
     } catch (error) {
         console.error('Error fetching review problems:', error);
-        res.status(500).json({ error: 'Failed to fetch problems' });
+        res.status(500).json({ error: 'Failed to fetch review problems' });
     }
 });
 
-// Endpoint to update SRS data for a problem
 app.post('/api/problems/:id/review', async (req, res) => {
     const { id } = req.params;
-    const { rating } = req.body; // 'again', 'hard', 'good', 'easy'
+    const { rating } = req.body;
 
     try {
         const problem = await Problem.findById(id);
@@ -120,39 +164,23 @@ app.post('/api/problems/:id/review', async (req, res) => {
             return res.status(404).json({ error: 'Problem not found' });
         }
 
-        // Simplified Spaced Repetition Logic
-        // In a real app, use a robust algorithm like SM-2
-        let { interval, easeFactor } = problem.srsData;
+        const { interval, easeFactor, repetitions } = problem.srsData;
 
-        switch (rating) {
-            case 'again': // Fail
-                interval = 1;
-                easeFactor = Math.max(1.3, easeFactor - 0.2);
-                break;
-            case 'hard':
-                interval = interval * 1.2;
-                easeFactor = Math.max(1.3, easeFactor - 0.15);
-                break;
-            case 'good':
-                interval = interval * easeFactor;
-                // Ease factor stays same
-                break;
-            case 'easy':
-                interval = interval * easeFactor * 1.3;
-                easeFactor = easeFactor + 0.15;
-                break;
-            default:
-                // Default to 'good' behavior if unknown
-                interval = interval * easeFactor;
-        }
+        // Map string rating to number (0-3)
+        const ratingMap = { 'again': 0, 'hard': 1, 'good': 2, 'easy': 3 };
+        const numericRating = ratingMap[rating.toLowerCase()] ?? 2; // Default to 'good' if invalid
 
-        // Apply logic
-        problem.srsData.interval = Math.round(interval); // Keep interval as integer days
-        problem.srsData.easeFactor = easeFactor;
+        // Calculate new SRS data
+        const result = calculateNextReview(numericRating, interval, easeFactor, repetitions || 0);
 
-        // Calculate next date
+        problem.srsData.interval = result.interval;
+        problem.srsData.easeFactor = result.easeFactor;
+        problem.srsData.repetitions = result.repetitions;
+        problem.srsData.lastReviewed = new Date();
+        problem.srsData.lastDifficulty = rating;
+
         const nextDate = new Date();
-        nextDate.setDate(nextDate.getDate() + problem.srsData.interval);
+        nextDate.setDate(nextDate.getDate() + result.interval);
         problem.srsData.nextReviewDate = nextDate;
 
         await problem.save();
