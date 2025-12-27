@@ -31,8 +31,26 @@ chrome.webRequest.onBeforeRequest.addListener(
                 // LeetCode submit payload usually has: casted_question_id, typed_code, lang
                 if (payload.typed_code) {
                     sourceCode = payload.typed_code;
-                    problemTitle = payload.question_id ? `LeetCode ${payload.question_id}` : "LeetCode Problem";
-                    // we can try to get more info but this is a good start
+
+                    // Extract Title from URL: https://leetcode.com/problems/two-sum/submit/
+                    try {
+                        const urlParts = details.url.split('/problems/');
+                        if (urlParts.length > 1) {
+                            const slug = urlParts[1].split('/')[0];
+                            // Format: "two-sum" -> "Two Sum"
+                            problemTitle = slug
+                                .split('-')
+                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                .join(' ');
+                        }
+                    } catch (e) {
+                        console.error("Error extracting title from URL:", e);
+                    }
+
+                    // Fallback if URL parsing failed
+                    if (!problemTitle || problemTitle === "") {
+                        problemTitle = payload.question_id ? `LeetCode ${payload.question_id}` : "LeetCode Problem";
+                    }
                 }
             } else if (details.url.includes("codechef.com")) {
                 platform = "CodeChef";
