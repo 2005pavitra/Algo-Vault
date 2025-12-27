@@ -346,7 +346,7 @@ const Dashboard = () => {
                                         <span className="text-xs font-bold text-neutral-300 uppercase tracking-wide">Settings</span>
                                     </button>
 
-                                    <button onClick={() => alert("Premium features coming soon!")} className="group/btn relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 to-purple-700 p-4 transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-indigo-500/25 flex flex-col items-center justify-center gap-3">
+                                    <button onClick={() => alert("Premium features coming soon!")} className="group/btn relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 p-4 transition-all hover:scale-[1.02] active:scale-95 shadow-lg shadow-amber-500/25 flex flex-col items-center justify-center gap-3">
                                         <div className="absolute inset-0 bg-white/20 opacity-0 transition-opacity group-hover/btn:opacity-100" />
                                         <div className="p-2 rounded-full bg-white/10 w-fit text-warning group-hover/btn:rotate-12 transition-transform">
                                             <svg className="w-6 h-6 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
