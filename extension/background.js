@@ -76,8 +76,8 @@ chrome.webRequest.onBeforeRequest.addListener(
                     timestamp: new Date().toISOString()
                 };
 
-                // Send to localhost
-                fetch('http://localhost:5000/api/save-problem', {
+                // Send to Production Backend
+                fetch('https://algo-vault-zigl.onrender.com/api/save-problem', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dataToSend)
