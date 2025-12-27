@@ -3,6 +3,9 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../utils/api';
+import { AuroraBackground } from '../components/ui/aurora-background';
+import { HoverBorderGradient } from '../components/ui/hover-border-gradient';
+import { SparklesCore } from '../components/ui/sparkles';
 
 import Loader from '../components/ui/Loader';
 
@@ -28,7 +31,7 @@ const Login = () => {
         setIsLoading(true);
         setError('');
         try {
-            const res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+            const res = await axios.post(`${API_URL}/auth/login`, { email, password });
             login(res.data.token);
             navigate('/');
         } catch (err) {
@@ -38,58 +41,83 @@ const Login = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900 relative overflow-hidden">
+        <AuroraBackground>
             {isLoading && <Loader />}
-            {/* Animated Background Elements */}
-            <div className="absolute top-0 left-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-            <div className="absolute -bottom-32 left-20 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+            <div className="relative z-20 w-full max-w-md">
+                <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-purple-500/20 to-blue-500/20 blur-xl opacity-50" />
 
-            <div className="relative z-10 w-full max-w-md p-8 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
-                <h2 className="text-3xl font-bold text-white mb-6 text-center tracking-tight">Welcome Back</h2>
-
-                {error && <div className="bg-red-500/20 text-red-200 p-3 rounded mb-4 text-sm">{error}</div>}
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
-                        <input
-                            type="email"
-                            required
-                            className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none"
-                            placeholder="you@example.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Password</label>
-                        <input
-                            type="password"
-                            required
-                            className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-white placeholder-gray-500 transition-all outline-none"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                <div className="relative w-full p-8 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/10 shadow-[0_0_40px_rgba(0,0,0,0.3)]">
+                    {/* Sparkles Effect */}
+                    <div className="absolute inset-0 h-full w-full pointer-events-none overflow-hidden rounded-2xl">
+                        <SparklesCore
+                            id="tsparticles"
+                            background="transparent"
+                            minSize={0.6}
+                            maxSize={1.4}
+                            particleDensity={50}
+                            className="w-full h-full"
+                            particleColor="#FFFFFF"
                         />
                     </div>
 
-                    <button
-                        type="submit"
-                        className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-blue-500/30 hover:scale-[1.02] transition-all duration-200"
-                    >
-                        Sign In
-                    </button>
-                </form>
+                    <div className="relative z-10">
+                        <div className="text-center mb-8">
+                            <h2 className="text-4xl font-bold text-white mb-2 tracking-tight">Welcome Back</h2>
+                            <p className="text-neutral-400 text-sm">Sign in to continue your streak</p>
+                        </div>
 
-                <p className="mt-6 text-center text-gray-400 text-sm">
-                    Don't have an account?{' '}
-                    <Link to="/signup" className="text-blue-400 hover:text-blue-300 font-medium hover:underline">
-                        Sign up
-                    </Link>
-                </p>
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/20 text-red-200 p-3 rounded-lg mb-6 text-sm flex items-center gap-2">
+                                <span className="bg-red-500 h-1.5 w-1.5 rounded-full animate-pulse" />
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-neutral-400 uppercase tracking-wider ml-1">Email</label>
+                                <input
+                                    type="email"
+                                    required
+                                    className="w-full px-4 py-3 bg-neutral-900/50 border border-neutral-800 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 text-white placeholder-neutral-600 transition-all outline-none backdrop-blur-sm"
+                                    placeholder="you@example.com"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-neutral-400 uppercase tracking-wider ml-1">Password</label>
+                                <input
+                                    type="password"
+                                    required
+                                    className="w-full px-4 py-3 bg-neutral-900/50 border border-neutral-800 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 text-white placeholder-neutral-600 transition-all outline-none backdrop-blur-sm"
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                            </div>
+
+                            <div className="pt-2 flex justify-center">
+                                <HoverBorderGradient
+                                    containerClassName="rounded-full"
+                                    as="button"
+                                    className="dark:bg-black bg-white text-black dark:text-white flex items-center space-x-2"
+                                >
+                                    <span className="font-semibold px-4">Sign In</span>
+                                </HoverBorderGradient>
+                            </div>
+                        </form>
+
+                        <p className="mt-8 text-center text-neutral-400 text-sm">
+                            Don't have an account?{' '}
+                            <Link to="/signup" className="text-white hover:text-purple-300 font-medium hover:underline transition-colors">
+                                Sign up
+                            </Link>
+                        </p>
+                    </div>
+                </div>
             </div>
-        </div>
+        </AuroraBackground>
     );
 };
 
